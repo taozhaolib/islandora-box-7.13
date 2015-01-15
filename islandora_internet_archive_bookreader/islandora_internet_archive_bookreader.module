@@ -1,0 +1,97 @@
+<?php
+
+/**
+ * @file
+ * Defines all the hooks this module implements.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_internet_archive_bookreader_menu() {
+  return array(
+    'admin/islandora/internet_archive_bookreader' => array(
+      'title' => 'Internet Archive BookReader',
+      'description' => 'Configure the Internet Archive BookReader.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('islandora_internet_archive_bookreader_admin_settings_form'),
+      'access arguments' => array('administer site configuration'),
+      'file' => 'includes/admin.form.inc',
+      'type' => MENU_NORMAL_ITEM,
+    ),
+    'internet_archive_bookreader_dimensions/%islandora_object' => array(
+      'page callback' => 'islandora_internet_archive_bookreader_dimensions_callback',
+      'page arguments' => array(1),
+      'access callback' => 'islandora_object_access_callback',
+      'access arguments' => array(ISLANDORA_VIEW_OBJECTS, 1),
+      'file' => 'includes/callback.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'internet_archive_bookreader_text/%islandora_object' => array(
+      'page callback' => 'islandora_internet_archive_bookreader_text_callback',
+      'page arguments' => array(1),
+      'access callback' => 'islandora_object_access_callback',
+      'access arguments' => array(ISLANDORA_VIEW_OBJECTS, 1),
+      'file' => 'includes/callback.inc',
+      'type' => MENU_CALLBACK,
+    ),
+    'internet_archive_bookreader_search/%' => array(
+      'page callback' => 'islandora_internet_archive_bookreader_search_callback',
+      'page arguments' => array(1, 2),
+      'access callback' => 'user_access',
+      'access arguments' => array(ISLANDORA_VIEW_OBJECTS),
+      'file' => 'includes/callback.inc',
+      'type' => MENU_CALLBACK,
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function islandora_internet_archive_bookreader_theme() {
+  return array(
+    'islandora_internet_archive_bookreader' => array(
+      'file' => 'theme/theme.inc',
+      'template' => 'theme/islandora-internet-archive-bookreader',
+      'variables' => array(
+        'object' => NULL,
+        'datastream_id' => 'JP2',
+        'page_progression' => 'rl',
+        'pages' => array(),
+      ),
+    ),
+    'islandora_internet_archive_bookreader_book_info' => array(
+      'file' => 'theme/theme.inc',
+      'variables' => array('object' => NULL),
+    ),
+  );
+}
+
+/**
+ * Implements hook_islandora_viewer_info().
+ */
+function islandora_internet_archive_bookreader_islandora_viewer_info() {
+  return array(
+    'islandora_internet_archive_bookreader' => array(
+      'label' => t('Internet Archive BookReader'),
+      'description' => t('Internet Archive BookReader.'),
+      'configuration' => 'admin/islandora/internet_archive_bookreader',
+      'callback' => 'islandora_internet_archive_bookreader_viewer_callback',
+      'model' => array('islandora:bookCModel', 'islandora:newspaperCModel'),
+    ),
+  );
+}
+
+/**
+ * Callback function for the viewer.
+ *
+ * @param array $params
+ *   The params for the theme function 'islandora_internet_archive_bookreader'.
+ *
+ * @return string
+ *   HTML repersentation of the Internet Archive BookReader.
+ */
+function islandora_internet_archive_bookreader_viewer_callback(array $params) {
+  return theme('islandora_internet_archive_bookreader', $params);
+}

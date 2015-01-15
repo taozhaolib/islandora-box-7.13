@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * islandora_image_annotation.install
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function islandora_image_annotation_requirements($phase) {
+  $requirements = array();
+  if ($phase == 'install') {
+    module_load_include('inc', 'islandora', 'includes/tuque');
+    if (!IslandoraTuque::exists()) {
+      $requirements['tuque_library'] = array(
+        'title' => 'Tuque',
+        'description' => 'The Islandora Basic Image solution pack requires the Tuque library.',
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+  return $requirements;
+}
+
+/**
+ * Implements hook_install().
+ *
+ * @see islandora_image_annotation_islandora_required_objects()
+ */
+function islandora_image_annotation_install() {
+  module_load_include('inc', 'islandora', 'includes/solution_packs');
+  // Install solution pack object(s).
+  islandora_install_solution_pack('islandora_image_annotation');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function islandora_image_annotation_uninstall() {
+  module_load_include('inc', 'islandora', 'includes/solution_packs');
+  $variables = array(
+    'islandora_paged_content_gs',
+    'islandora_annotation_mappings',
+    'islandora_annotation_enforce_taxonomy',
+    'islandora_annotation_optimized',
+    'annotation_type_search_field',
+    'image_annotation_annotation_stroke_width',
+    'islandora_image_annotation_use_entity_tagging',
+    'annotation_use_title_vocabulary',
+    'annotation_title_search_field',
+    'annotation_genre_search_field',
+    'islandora_solr_request_handler',
+    'annotation_genre_field',
+    'islandora_solr_url',
+    'islandora_solr_content_model_field',
+    'islandora_image_annotation_datastreams',
+  );
+  array_walk($variables, 'variable_del');
+  // Uninstall callback.
+  islandora_install_solution_pack('islandora_image_annotation', 'uninstall');
+}

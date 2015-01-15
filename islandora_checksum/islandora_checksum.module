@@ -1,0 +1,173 @@
+<?php
+
+/**
+ * @file
+ * The main checksum module file. Contains most of the hook implementations.
+ *
+ * @todo Add uninstall hook to delete our the variables we set.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_checksum_menu() {
+  $items = array();
+  $items['admin/islandora/checksum'] = array(
+    'title' => 'Checksum',
+    'description' => 'Configure the Islandora Checksum creator.',
+    'page callback' => 'drupal_get_form',
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array('islandora_checksum_admin_form'),
+    'file' => 'includes/admin.form.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_islandora_datastream_alter().
+ */
+function islandora_checksum_islandora_datastream_alter(AbstractObject &$object, AbstractDatastream &$datastream, &$context) {
+  if (variable_get('islandora_checksum_enable_checksum', FALSE) && in_array($context['action'], array('ingest', 'modify'))) {
+    $datastream->checksumType = variable_get('islandora_checksum_checksum_type', 'DISABLED');
+  }
+}
+
+/**
+ * Query the resource index to get a list of collections.
+ * 
+ * @return array
+ *   List of collection PIDs.
+ */
+function islandora_checksum_get_collections() {
+  // Query the rindex to get all collections.
+  $tuque = islandora_get_tuque_connection();
+  $ri_query = 'select $object $label from <#ri>
+     where $object <fedora-model:hasModel> <info:fedora/islandora:collectionCModel>
+      and $object <fedora-model:label> $label';
+  $results = $tuque->repository->ri->itqlQuery($ri_query, 'unlimited');
+  $collections = array();
+  foreach ($results as $member) {
+    $pid = preg_replace('/info:fedora\//', '', $member['object']['value']);
+    $label = $member['label']['value'];
+    // We don't want the root collection.
+    if ($pid != 'islandora:root') {
+      $collections[$pid] = $label;
+    }
+  }
+  return $collections;
+}
+
+/**
+ * Query the RI index to get PIDs of all child objects in a collection.
+ *
+ * @param string $pid
+ *   The PID of Islandora collection.
+ * 
+ * @return array
+ *   List of member object PIDs.
+ */
+function islandora_checksum_get_collection_members($pid) {
+  // List of objects to create Bags for.
+  $members = array();
+  // Query the rindex to get all the objects that have a 'isMemberOfCollection'
+  // relationship with the specified collection and add all their PIDs to the
+  // list.
+  $tuque = islandora_get_tuque_connection();
+  $ri_query = 'select $object from <#ri>
+    where  $object <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $pid . '>';
+  $result = $tuque->repository->ri->itqlQuery($ri_query, 'unlimited');
+  foreach ($result as $member) {
+    $member_pid = preg_replace('/info:fedora\//', '', $member['object']['value']);
+    $members[] = $member_pid;
+  }
+  return $members;
+}
+
+/**
+ * Custom button submit handler.
+ */
+function islandora_checksum_apply_retro($form, &$form_state) {
+  batch_set(islandora_checksum_enable_retro_checksums($form_state['values']['collection']));
+}
+
+/**
+ * Sets up the batch.
+ * 
+ * @param string $collection_pid
+ *   The PID of the collection to apply checksums to.
+ *
+ * @return array
+ *   The batch.
+ */
+function islandora_checksum_enable_retro_checksums($collection_pid) {
+  $pids = islandora_checksum_get_collection_members($collection_pid);
+  $operations = array();
+  $num_objects = count($pids);
+  foreach ($pids as $pid) {
+    $operations[] = array('islandora_checksum_enable_object_checksums',
+      array($pid, $num_objects),
+    );
+  }
+  $batch = array(
+    'operations' => $operations,
+    'title' => 'Enabling checksums',
+    'finished' => 'islandora_checksum_batch_finished',
+  );
+  return $batch;
+}
+
+/**
+ * Process a single object in the batch.
+ * 
+ * @param string $pid
+ *   The PID of the object.
+ */
+function islandora_checksum_enable_object_checksums($pid, $num_objects, &$context) {
+  $object = islandora_object_load($pid);
+  $context['results'][] = $pid;
+  $context['message'] = t('Process object "@pid"', array('@pid' => $pid)) . ' ' . $num_objects;
+  $tuque = islandora_get_tuque_connection();
+  foreach ($object as $ds) {
+    if (islandora_datastream_access(FEDORA_VIEW_OBJECTS, $ds) && $ds->checksumType == 'DISABLED') {
+      $ds->checksumType = variable_get('islandora_checksum_checksum_type', 'DISABLED');
+      // Calling modifyDatastream triggers
+      // islandora_checksum_islandora_datastream_alter(),
+      // enabling the checksum.
+      try {
+        $ds_info = $tuque->api->m->modifyDatastream($pid, $ds->id);
+      }
+      catch (RepositoryException $e) {
+        if (variable_get('islandora_checksum_log_retro_errors', 1)) {
+          watchdog('islandora_checksum', 'Checksum for !object, !ds_id not enabled: !message',
+            array(
+              '!object' => $pid,
+              '!ds_id' => $ds->id,
+              '!message' => $e->getMessage(),
+            ),
+            WATCHDOG_WARNING
+          );
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Batch 'finished' callback.
+ */
+function islandora_checksum_batch_finished($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('Checksums enabled for @count objects.', array('@count' => count($results))));
+  }
+  else {
+    // An error occurred.
+    $error_operation = reset($operations);
+    drupal_set_message(t('An error occurred while processing @operation with arguments : @args',
+      array(
+        '@operation' => $error_operation[0],
+        '@args' => print_r($error_operation[0], TRUE))
+        )
+    );
+  }
+}

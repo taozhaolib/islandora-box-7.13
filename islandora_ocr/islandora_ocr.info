@@ -1,0 +1,8 @@
+name = "Islandora OCR"
+description = "Generate/parse OCR and word coordinate data from images."
+package = Islandora
+dependencies[] = islandora
+version = 7.x-1.3
+core = 7.x
+files[] = includes/hocr.inc
+files[] = tests/hocr.test

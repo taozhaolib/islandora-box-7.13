@@ -1,0 +1,90 @@
+<?php
+/**
+ * @file
+ * Module used to handle book batches through the UI and drush.
+ */
+
+/**
+ * Implements hook_CMODEL_PID_islandora_object_ingested().
+ */
+function islandora_book_batch_islandora_bookCModel_islandora_object_ingested($object) {
+  if (!isset($object['TN'])) {
+    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    islandora_paged_content_update_paged_content_thumbnail($object);
+  }
+
+  if ($object->relationships->get(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', TRUE)) {
+    // Generate the PDF if the flag was set.
+    module_load_include('inc', 'islandora_paged_content', 'includes/batch');
+    module_load_include('inc', 'islandora_paged_content', 'includes/utilities');
+    $batch = islandora_paged_content_create_pdf_batch($object, array_keys(islandora_paged_content_get_pages($object)), array(
+      '-density' => '96',
+      '-compress' => 'LZW',
+    ));
+
+    $batch['operations'][] = array('islandora_book_batch_remove_pdf_flag', array($object));
+
+    if (module_exists('rules')) {
+      // Allow rules to respond to this event. (To allow configurable messages
+      // for mailing and such).
+      $batch['operations'][] = array(
+        'rules_invoke_event',
+        array('islandora_book_batch_ingested', $object->id),
+      );
+    }
+
+    batch_set($batch);
+
+    $batch = batch_get();
+    if (!isset($batch['id'])) {
+      // Start the batch, as it does not seem to be running.
+      // XXX: Will this cause issues? If there's some other hook to run after,
+      // there might be issues, no?
+      batchProcess();
+    }
+  }
+}
+
+/**
+ * A batch operation to remove the flag.
+ */
+function islandora_book_batch_remove_pdf_flag($object, &$context) {
+  $object->relationships->remove(ISLANDORA_RELS_EXT_URI, 'create_pdf', 'true', TRUE);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function islandora_book_batch_menu() {
+  $items = array();
+
+  $items['islandora/object/%islandora_object/manage/collection/book_batch'] = array(
+    'title' => 'Book Batch',
+    'access callback' => 'islandora_book_batch_menu_access',
+    'access arguments' => array(2),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_book_batch_form', 2),
+    'file' => 'includes/batch.form.inc',
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  return $items;
+}
+
+/**
+ * Menu access callback.
+ */
+function islandora_book_batch_menu_access($object) {
+  if (!islandora_object_access(ISLANDORA_INGEST, $object)) {
+    return FALSE;
+  }
+
+  $c = 'COLLECTION_POLICY';
+  if (isset($object[$c]) && islandora_datastream_access(ISLANDORA_VIEW_OBJECTS, $object[$c])) {
+    $cp = new CollectionPolicy($object[$c]->content);
+
+    return array_key_exists('islandora:bookCModel', $cp->getContentModels());
+  }
+
+  return FALSE;
+}

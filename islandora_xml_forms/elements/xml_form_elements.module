@@ -1,0 +1,458 @@
+<?php
+
+/**
+ * @file
+ * Hooks and constants for xml_form_elements.
+ */
+
+/**
+ * Constants
+ */
+define('XML_FORM_ELEMENTS_TABS_THEME', 'tabs');
+define('XML_FORM_ELEMENTS_TABS_CONTENT_THEME', 'tabs_content');
+define('XML_FORM_ELEMENTS_TABPANEL_THEME', 'tabpanel');
+define('XML_FORM_ELEMENTS_TAGS_THEME', 'tags');
+define('XML_FORM_ELEMENTS_TAGS_CONTENT_THEME', 'tags_content');
+define('XML_FORM_ELEMENTS_TAG_THEME', 'tag');
+define('XML_FORM_ELEMENTS_DATEPICKER_THEME', 'datepicker');
+define('XML_FORM_ELEMENTS_PATH', drupal_get_path('module', 'xml_form_elements') . '/');
+define('XML_FORM_ELEMENTS_INCLUDES_PATH', XML_FORM_ELEMENTS_PATH . 'includes/');
+define('XML_FORM_ELEMENTS_JQUERY_THEME_PATH', XML_FORM_ELEMENTS_PATH . 'theme/');
+define('XML_FORM_ELEMENTS_JS_PATH', XML_FORM_ELEMENTS_PATH . 'js/');
+define('XML_FORM_ELEMENTS_CSS_PATH', XML_FORM_ELEMENTS_PATH . 'css/');
+define('XML_FORM_ELEMENTS_IMAGES_PATH', XML_FORM_ELEMENTS_PATH . 'images/');
+
+// @codingStandardsIgnoreStart
+/**
+ * @deprecated
+ */
+define('THEME_XML_FORM_ELEMENTS_TABS', XML_FORM_ELEMENTS_TABS_THEME);
+define('THEME_XML_FORM_ELEMENTS_TABS_CONTENT', XML_FORM_ELEMENTS_TABS_CONTENT_THEME);
+define('THEME_XML_FORM_ELEMENTS_TABPANEL', XML_FORM_ELEMENTS_TABPANEL_THEME);
+define('THEME_XML_FORM_ELEMENTS_TAGS', XML_FORM_ELEMENTS_TAGS_THEME);
+define('THEME_XML_FORM_ELEMENTS_TAGS_CONTENT', XML_FORM_ELEMENTS_TAGS_CONTENT_THEME);
+define('THEME_XML_FORM_ELEMENTS_TAG', XML_FORM_ELEMENTS_TAG_THEME);
+define('THEME_XML_FORM_ELEMENTS_DATEPICKER', XML_FORM_ELEMENTS_DATEPICKER_THEME);
+define('PATH_XML_FORM_ELEMENTS', XML_FORM_ELEMENTS_PATH);
+define('PATH_XML_FORM_ELEMENTS_INCLUDES', XML_FORM_ELEMENTS_INCLUDES_PATH);
+define('PATH_XML_FORM_ELEMENTS_JQUERY_THEME', XML_FORM_ELEMENTS_JQUERY_THEME_PATH);
+define('PATH_XML_FORM_ELEMENTS_JS', XML_FORM_ELEMENTS_JS_PATH);
+define('PATH_XML_FORM_ELEMENTS_CSS', XML_FORM_ELEMENTS_CSS_PATH);
+define('PATH_XML_FORM_ELEMENTS_IMAGES', XML_FORM_ELEMENTS_IMAGES_PATH);
+// @codingStandardsIgnoreEnd
+
+/**
+ * Implements hook_element_info().
+ */
+function xml_form_elements_element_info() {
+  return array(
+    'tabs' => array(
+      '#input' => TRUE,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#process' => array('xml_form_elements_tabs_process'),
+      '#theme_wrappers' => array('tabs', 'form_element'),
+    ),
+    'tabpanel' => array(
+      '#input' => TRUE,
+      '#process' => array('xml_form_elements_tabpanel_process'),
+      '#user_data' => array('add' => TRUE, 'delete' => TRUE),
+      '#theme_wrappers' => array('tabpanel'),
+    ),
+    'tags' => array(
+      '#input' => TRUE,
+      '#process' => array('xml_form_elements_tags_process'),
+      '#theme_wrappers' => array('tags', 'form_element'),
+    ),
+    'tag' => array(
+      '#input' => TRUE,
+      '#process' => array('xml_form_elements_tag_process'),
+      '#theme' => 'tag',
+    ),
+    'datepicker' => array(
+      '#input' => TRUE,
+      '#process' => array('xml_form_elements_datepicker_process'),
+      '#theme' => 'datepicker',
+      '#theme_wrappers' => array('form_element'),
+    ),
+    'defaultable_markup' => array(
+      '#markup' => '',
+      '#pre_render' => array(
+        'xml_form_elements_default_value_to_markup',
+        'drupal_pre_render_markup',
+        'xml_form_elements_remove_empty_markup',
+      ),
+      '#post_render' => array('xml_form_elements_defaultable_markup'),
+    ),
+    'defaultable_item' => array(
+      '#markup' => '',
+      '#pre_render' => array(
+        'xml_form_elements_default_value_to_markup',
+        'drupal_pre_render_markup',
+        'xml_form_elements_remove_empty_markup',
+      ),
+      '#theme_wrappers' => array('xml_form_element'),
+    ),
+    'creative_commons' => array(
+      '#input' => TRUE,
+      '#tree' => FALSE,
+      '#process' => array('xml_form_elements_creative_commons_process'),
+      '#value_callback' => 'xml_form_elements_creative_commons_value_callback',
+    ),
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function xml_form_elements_theme($existing, $type, $theme, $path) {
+  return array(
+    XML_FORM_ELEMENTS_TABS_THEME => array(
+      'render element' => 'element',
+      'template' => 'templates/Tabs',
+      'file' => 'includes/Tabs.inc',
+    ),
+    // The content of a single tabpanel.
+    XML_FORM_ELEMENTS_TABPANEL_THEME => array(
+      'render element' => 'element',
+      'file' => 'includes/TabPanel.inc',
+    ),
+    XML_FORM_ELEMENTS_TAGS_THEME => array(
+      'render element' => 'element',
+      'template' => 'templates/Tags',
+      'file' => 'includes/Tags.inc',
+    ),
+    XML_FORM_ELEMENTS_TAG_THEME => array(
+      'render element' => 'element',
+      'file' => 'includes/Tag.inc',
+    ),
+    XML_FORM_ELEMENTS_DATEPICKER_THEME => array(
+      'render element' => 'element',
+      'file' => 'includes/Datepicker.inc',
+    ),
+    'xml_form_element' => array(
+      'render element' => 'element',
+    ),
+  );
+}
+
+/**
+ * Process the 'tabs' Element.
+ *
+ * @param array $element
+ *   The element to be processed.
+ * @param mixed $edit
+ *   The submitted value for this element, or NULL.
+ * @param array $form_state
+ *   The drupal form state.
+ * @param array $complete_form
+ *   The drupal form.
+ *
+ * @return array
+ *   The processed element.
+ */
+function xml_form_elements_tabs_process(array $element, array &$form_state, array $complete_form = NULL) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/Tabs');
+  return Tabs::Process($element, $form_state, $complete_form);
+}
+
+/**
+ * Process the 'tabpanel' Element.
+ *
+ * @param array $element
+ *   The element to be processed.
+ * @param mixed $edit
+ *   The submitted value for this element, or NULL.
+ * @param array $form_state
+ *   The drupal form state.
+ * @param array $complete_form
+ *   The drupal form.
+ *
+ * @return array
+ *   The processed element.
+ */
+function xml_form_elements_tabpanel_process(array $element, array &$form_state, array $complete_form = NULL) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/TabPanel');
+  return TabPanel::Process($element, $form_state, $complete_form);
+}
+
+/**
+ * Process the 'tags' Element.
+ *
+ * @param array $element
+ *   The element to be processed.
+ * @param mixed $edit
+ *   The submitted value for this element, or NULL.
+ * @param array $form_state
+ *   The drupal form state.
+ * @param array $complete_form
+ *   The drupal form.
+ *
+ * @return array
+ *   The processed element.
+ */
+function xml_form_elements_tags_process(array $element, array &$form_state, array $complete_form = NULL) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/Tags');
+  return Tags::Process($element, $form_state, $complete_form);
+}
+
+/**
+ * Process the 'tag' Element.
+ *
+ * @param array $element
+ *   The element to be processed.
+ * @param array $form_state
+ *   The drupal form state.
+ * @param array $complete_form
+ *   The drupal form.
+ *
+ * @return array
+ *   The processed element.
+ */
+function xml_form_elements_tag_process($element, &$form_state, $complete_form) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/Tag');
+  return Tag::Process($element, $form_state, $complete_form);
+}
+
+/**
+ * Process the 'datepicker' Element.
+ *
+ * @param array $element
+ *   The element to be processed.
+ * @param array $form_state
+ *   The drupal form state.
+ * @param array $complete_form
+ *   The drupal form.
+ *
+ * @return array
+ *   The processed element.
+ */
+function xml_form_elements_datepicker_process($element, &$form_state, $complete_form) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/Datepicker');
+  return Datepicker::Process($element, $form_state, $complete_form);
+}
+
+/**
+ * Generic callback for all AJAX requests.
+ *
+ * @param array $form
+ *   The processed Drupal form.
+ * @param array $form_state
+ *   The form state.
+ *
+ * @return array
+ *   The form element to render in response to the AJAX request.
+ */
+function xml_form_elements_ajax_callback($form, $form_state) {
+  return find_element($form, $form_state['triggering_element']['#ajax']['params']['render']);
+}
+
+function xml_form_elements_form_element_tabs_ajax_alter(FormElement $element, array &$form, array &$form_state) {
+  $triggering_element = $form_state['triggering_element'];
+  $action = $triggering_element['#ajax']['params']['action'];
+  switch ($action) {
+    case 'add':
+      xml_form_elements_form_element_tabs_ajax_add($element, $form, $form_state);
+      break;
+    case 'delete':
+      xml_form_elements_form_element_tabs_ajax_delete($element, $form, $form_state);
+      break;
+  }
+}
+
+function xml_form_elements_form_element_tabs_ajax_add(FormElement $element, array &$form, array &$form_state) {
+  $tab = $element->findElement($form_state['triggering_element']['#ajax']['params']['child']);
+  $new_tab = clone $tab;
+  $new_tab->eachDecendant(function($element) { $element->default_value = NULL; });
+  $element->adopt($new_tab);
+  $form[] = $new_tab->toArray();
+}
+
+function xml_form_elements_form_element_tabs_ajax_delete(FormElement $element, array &$form, array &$form_state) {
+  $tab = $element->findElement($form_state['triggering_element']['#ajax']['params']['child']);
+  $tab->orphan();
+  foreach (element_children($form) as $child) {
+    if ($form[$child]['#hash'] == $tab->hash) {
+      unset($form[$child]);
+      break;
+    }
+  }
+}
+
+/**
+ * Not ideal a hook used for modifying tags during the build function.
+ */
+function xml_form_elements_form_element_tags_ajax_alter(FormElement $element, array &$form, array &$form_state) {
+  $triggering_element = $form_state['triggering_element'];
+  $action = $triggering_element['#ajax']['params']['action'];
+  switch ($action) {
+    case 'add':
+      xml_form_elements_form_element_tags_ajax_add($element, $form, $form_state);
+      break;
+
+    case 'delete':
+      xml_form_elements_form_element_tags_ajax_delete($element, $form, $form_state);
+      break;
+
+    case 'edit':
+      xml_form_elements_form_element_tags_ajax_edit($element, $form, $form_state);
+      break;
+  }
+}
+
+function xml_form_elements_form_element_tags_ajax_add(FormElement $element, array &$form, array &$form_state) {
+  $form_children = element_children($form);
+  $input_field = &$form[array_shift($form_children)];
+  // Get Input Value as its not stored in the object form.
+  $default_value = $input_field['#default_value'];
+  $input_field['#value'] = '';
+  $element_children = array_values($element->children);
+  $input = array_shift($element_children);
+  $tag = clone $input;
+  // Create new tag and have it stored in the state.
+  $input->parent->adopt($tag);
+  $tag = $tag->toArray();
+  $tag['#default_value'] = $default_value;
+  // Update drupal form.
+  $form[] = $tag;
+}
+
+function xml_form_elements_form_element_tags_ajax_delete(FormElement $element, array &$form, array &$form_state) {
+  $triggering_element = $form_state['triggering_element'];
+  $hash = $triggering_element['#ajax']['params']['child'];
+  $tag = $element->findElement($hash);
+  $tag->orphan();
+  foreach (element_children($form) as $child) {
+    if ($form[$child]['#hash'] == $hash) {
+      unset($form[$child]);
+    }
+  }
+}
+
+function xml_form_elements_form_element_tags_ajax_edit(FormElement $element, array &$form, array &$form_state) {
+  $triggering_element = $form_state['triggering_element'];
+  $input_field = &$form[array_shift(element_children($form))];
+  if ($input_field['#default_value'] != '') {
+    xml_form_elements_form_element_tags_ajax_add($element, $form, $form_state);
+  }
+  $hash = $triggering_element['#ajax']['params']['child'];
+  $tag_field = find_element($form, $hash);
+  $input_field['#value'] = $tag_field['#default_value'];
+  xml_form_elements_form_element_tags_ajax_delete($element, $form, $form_state);
+}
+
+/**
+ * Pre-render callback; conditionally copy #default_value to #markup.
+ *
+ * Only copies if there is no #markup already set, and #default_value is not
+ * empty.
+ *
+ * @param array $elements
+ *   An array representing the given element.
+ */
+function xml_form_elements_default_value_to_markup($elements) {
+  if (empty($elements['#markup']) && !empty($elements['#default_value'])) {
+    $elements['#markup'] = $elements['#default_value'];
+  }
+  return $elements;
+}
+
+/**
+ * Pre-render callback; removes empty markup from an element.
+ *
+ * @param array $elements
+ *   An array representing the given element.
+ */
+function xml_form_elements_remove_empty_markup($elements) {
+  $children = element_children($elements);
+  if (!empty($elements['#markup']) || count($children) > 0) {
+    return $elements;
+  }
+  else {
+    return array();
+  }
+}
+
+/**
+ * Implements theme_hook().
+ */
+function theme_xml_form_element(&$elements) {
+  if (!empty($elements['element']['#children'])) {
+    return theme('form_element', $elements['element']);
+  }
+}
+
+/**
+ * Strips prefixes and suffixes from children who are empty.
+ *
+ * @param string $children
+ *   The markup attempted to be rendered.
+ * @param array $elements
+ *   An array of elements.
+ *
+ * @return string
+ *   The rendered children if there is markup, nothing otherwise.
+ */
+function xml_form_elements_defaultable_markup($children, &$elements) {
+  if (!empty($children)) {
+    return $children;
+  }
+  else {
+    // We need to strip away prefixes and suffixes when there is no markup
+    // to be rendered.
+    $elements['#prefix'] = '';
+    $elements['#suffix'] = '';
+    return '';
+  }
+}
+
+/**
+ * Process for the creative_commons_process form element.
+ *
+ * The state of #tree is managed by this form element because #tree is needed
+ * for ajax but destroys the value_callback.
+ *
+ * @param array $element
+ *   The element to create.
+ * @param array $form_state
+ *   The form state.
+ * @param array $complete_form
+ *   The form.
+ *
+ * @return array
+ *   The form element.
+ */
+function xml_form_elements_creative_commons_process($element, &$form_state, $complete_form) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/creative_commons');
+  return xml_form_elements_creative_commons($element, $form_state);
+}
+
+/**
+ * Value callback for creative commons element.
+ *
+ * Input isn't set in form builder edits. Data from the process function can't
+ * be relied on to be available in value callbacks because Drupal caches before
+ * the element is processed.
+ *
+ * @param array $element
+ *   The element.
+ * @param array $input
+ *   The input of the element.
+ * @param array $form_state
+ *   The form state.
+ *
+ * @return string
+ *   The license URI.
+ */
+function xml_form_elements_creative_commons_value_callback(&$element, $input, &$form_state) {
+  form_load_include($form_state, 'inc', 'xml_form_elements', 'includes/creative_commons');
+  if (isset($input) && $input && current_path() != 'system/ajax') {
+    if (isset($form_state['storage']['xml_form_elements'][$element['#name']]['license_uri'])) {
+      return $form_state['storage']['xml_form_elements'][$element['#name']]['license_uri'];
+    }
+    else {
+      extract($input['license_fieldset']);
+      return xml_form_elements_creative_commons_value($allow_commercial, $allow_modifications, $license_jurisdiction);
+    }
+  }
+}

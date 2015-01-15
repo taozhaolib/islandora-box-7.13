@@ -1,0 +1,34 @@
+.islandora-compound-title {
+  font-weight: bold;
+}
+
+.islandora-compound-prev-next {
+  border-bottom: 1px solid #b3b3b3;
+  margin-bottom: 15px;
+}
+
+.islandora-compound-thumbs {
+  display: block;
+  overflow: auto;
+}
+
+.islandora-compound-thumb {
+  max-width: 100%;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.islandora-compound-thumbs img {
+  float: left;
+}
+
+.islandora-compound-thumb .islandora-compound-caption {
+  width: 100%;
+  overflow: hidden;
+  float: left;
+  white-space: nowrap;
+}
+
+.islandora-compound-thumbs img.active{
+  border:0.3em solid;
+}

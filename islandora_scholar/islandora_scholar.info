@@ -1,0 +1,15 @@
+name = Islandora Scholar
+description = Shows a list of items in a Fedora collection, specific to scholarly publications.
+dependencies[] = islandora
+dependencies[] = citeproc
+dependencies[] = bibutils
+dependencies[] = islandora_solr
+dependencies[] = file
+files[] = includes/citation.tab.inc
+files[] = includes/coins.inc
+files[] = includes/romeo.tab.inc
+files[] = tests/hooked_access.test
+files[] = includes/importer.inc
+package = Islandora
+version = 7.x-1.3
+core = 7.x

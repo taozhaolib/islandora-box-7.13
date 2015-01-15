@@ -1,0 +1,119 @@
+/**
+ * Undo the global css settings from BookReader.css.
+ */
+body, h3, a {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+div#BookReader {
+  position: static;
+  overflow: visible;
+  vertical-align: baseline;
+  background-color: #9A9B9D;
+  font-size: 67.5%;
+  margin: 0;
+  padding: 0;
+}
+#BookReader h3 {
+  font-size: 20px;
+  font-family:  "News Gothic MT","Trebuchet MS",Geneva,Helvetica,sans-serif;
+  font-weight: 700;
+  color: #dedede;
+}
+#BookReader a {
+  outline: none;
+}
+div#BRtoolbar {
+  position: relative;
+  margin-bottom: -40px;
+}
+div#BRcontainer {
+  position: relative;
+  height: 680px;
+}
+div#BRnav {
+  position: relative;
+  margin-top: -40px;
+}
+div#BRfulltext .BRfloatMeta {
+  overflow: auto;
+}
+div.BRpagediv1up {
+ overflow: visible;
+}
+.BRicon.full_text {
+  display: block;
+  float: left;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  vertical-align: middle;
+  border: none;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0);
+  background-image: url(../images/BRicons.png);
+  background-repeat: no-repeat;
+  background-position: -1240px 0px;
+}
+.BRicon.full_text:hover {
+  background-position: -1280px 0px;
+}
+button.BRicon {
+  background-image: url(../images/BRicons.png);
+}
+button.BRicon:hover {
+  background-image: url(../images/BRicons.png);
+}
+button#btnSrch {
+  background-image: none;
+  padding: 0;
+  margin: 0;
+}
+button#btnSrch:hover {
+  background-image: none;
+}
+div.BRprogresspopup {
+  position: relative;
+  margin:auto;
+  max-width: 300px;
+}
+.textTop {
+  font-size: 10px;
+}
+.textRight {
+  float: right;
+  width: 50%;
+}
+.textLeft {
+  float: left;
+  width: 50%;
+}
+
+/*
+ * Colorbox (used for displaying textarea with page OCR)
+ *
+ * Used to handle conflict with the colorbox Drupal module
+ * pertaining to the textarea
+ */
+
+#cboxWrapper {
+  background: none; /* Used to eliminate white background */
+}
+
+#cboxMiddleLeft {
+  height: 0 !important; /* Positions textarea correctly */
+}
+
+#cboxContent {
+  height: 100% !important; /* Set height of textarea to display correctly */
+}
+
+#div-heading-bookmetadata {
+    color: #234600;
+    font-size: 20px;
+}

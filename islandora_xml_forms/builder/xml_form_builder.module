@@ -1,0 +1,601 @@
+<?php
+
+/**
+ * @file
+ * Defines all the hooks this module implements.
+ */
+
+// Constants.
+define('XML_FORM_BUILDER_LIST_FORMS_PERMS', 'List XML Forms');
+define('XML_FORM_BUILDER_CREATE_FORMS_PERMS', 'Create XML Forms');
+define('XML_FORM_BUILDER_EDIT_FORMS_PERMS', 'Edit XML Forms');
+define('XML_FORM_BUILDER_DELETE_FORMS_PERMS', 'Delete XML Forms');
+define('XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS', 'Associate XML Forms');
+
+define('XML_FORM_BUILDER_MAIN_MENU', 'admin/islandora/xmlform');
+define('XML_FORM_BUILDER_CREATE_MENU', 'admin/islandora/xmlform/create');
+define('XML_FORM_BUILDER_IMPORT_MENU', 'admin/islandora/xmlform/import');
+define('XML_FORM_BUILDER_VIEW_MENU', 'admin/islandora/xmlform/%/view');
+define('XML_FORM_BUILDER_COPY_MENU', 'admin/islandora/xmlform/%/copy');
+define('XML_FORM_BUILDER_EDIT_MENU', 'admin/islandora/xmlform/%/edit');
+define('XML_FORM_BUILDER_DELETE_MENU', 'admin/islandora/xmlform/%/delete');
+define('XML_FORM_BUILDER_ASSOCIATIONS_MENU', 'admin/islandora/xmlform/%/associations');
+define('XML_FORM_BUILDER_ASSOCIATE_MENU', 'admin/islandora/xmlform/%/associate/%');
+define('XML_FORM_BUILDER_DISASSOCIATE_MENU', 'admin/islandora/xmlform/%/disassociate/%');
+define('XML_FORM_BUILDER_EXPORT_CALLBACK', 'admin/islandora/xmlform/%/export');
+define('XML_FORM_BUILDER_SAVE_CALLBACK', 'admin/islandora/xmlform/%/edit/save');
+define('XML_FORM_BUILDER_EDIT_DATASTREAM_MENU', 'islandora/edit_form/%islandora_object/%islandora_datastream');
+
+// @codingStandardsIgnoreStart
+define('PERM_XML_FORM_BUILDER_LIST_FORMS', XML_FORM_BUILDER_LIST_FORMS_PERMS);
+define('PERM_XML_FORM_BUILDER_CREATE_FORMS', XML_FORM_BUILDER_CREATE_FORMS_PERMS);
+define('PERM_XML_FORM_BUILDER_EDIT_FORMS', XML_FORM_BUILDER_EDIT_FORMS_PERMS);
+define('PERM_XML_FORM_BUILDER_DELETE_FORMS', XML_FORM_BUILDER_DELETE_FORMS_PERMS);
+define('PERM_XML_FORM_BUILDER_ASSOCIATE_FORMS', XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS);
+define('MENU_XML_FORM_BUILDER_MAIN', XML_FORM_BUILDER_MAIN_MENU);
+define('MENU_XML_FORM_BUILDER_CREATE', XML_FORM_BUILDER_CREATE_MENU);
+define('MENU_XML_FORM_BUILDER_IMPORT', XML_FORM_BUILDER_IMPORT_MENU);
+define('MENU_XML_FORM_BUILDER_VIEW', XML_FORM_BUILDER_VIEW_MENU);
+define('MENU_XML_FORM_BUILDER_COPY', XML_FORM_BUILDER_COPY_MENU);
+define('MENU_XML_FORM_BUILDER_EDIT', XML_FORM_BUILDER_EDIT_MENU);
+define('MENU_XML_FORM_BUILDER_DELETE', XML_FORM_BUILDER_DELETE_MENU);
+define('MENU_XML_FORM_BUILDER_ASSOCIATIONS', XML_FORM_BUILDER_ASSOCIATIONS_MENU);
+define('MENU_XML_FORM_BUILDER_ASSOCIATE', XML_FORM_BUILDER_ASSOCIATE_MENU);
+define('MENU_XML_FORM_BUILDER_DISASSOCIATE', XML_FORM_BUILDER_DISASSOCIATE_MENU);
+define('MENU_CALLBACK_XML_FORM_BUILDER_EXPORT', XML_FORM_BUILDER_EXPORT_CALLBACK);
+define('MENU_CALLBACK_XML_FORM_BUILDER_SAVE', XML_FORM_BUILDER_SAVE_CALLBACK);
+define('MENU_XML_FORM_BUILDER_EDIT_DATASTREAM', XML_FORM_BUILDER_EDIT_DATASTREAM_MENU);
+// @codingStandardsIgnoreEnd
+
+/**
+ * Implements hook_menu().
+ */
+function xml_form_builder_menu() {
+  $items[XML_FORM_BUILDER_MAIN_MENU] = array(
+    'title' => 'Form Builder',
+    'description' => 'Create, manage and edit XML-based forms.',
+    'file' => 'Main.inc',
+    'page callback' => 'xml_form_builder_main',
+    'access arguments' => array(XML_FORM_BUILDER_LIST_FORMS_PERMS),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items[XML_FORM_BUILDER_CREATE_MENU] = array(
+    'title' => 'Create Form',
+    'description' => 'Create a new form.',
+    'file' => 'Create.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_create', 'create'),
+    'access arguments' => array(XML_FORM_BUILDER_CREATE_FORMS_PERMS),
+    'type' => MENU_LOCAL_ACTION,
+  );
+  $items[XML_FORM_BUILDER_IMPORT_MENU] = array(
+    'title' => 'Import Form',
+    'description' => 'Import a form from an existing definition.',
+    'file' => 'Create.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_create', 'import'),
+    'access arguments' => array(XML_FORM_BUILDER_CREATE_FORMS_PERMS),
+    'type' => MENU_LOCAL_ACTION,
+  );
+  $items[XML_FORM_BUILDER_VIEW_MENU] = array(
+    'title' => 'Preview Form',
+    'description' => 'Preview a form.',
+    'file' => 'Preview.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_preview', 3),
+    'access arguments' => array(XML_FORM_BUILDER_LIST_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_EXPORT_CALLBACK] = array(
+    'title' => 'Export Form',
+    'description' => 'Export a form.',
+    'page callback' => 'xml_form_builder_export',
+    'page arguments' => array(3),
+    'access arguments' => array(XML_FORM_BUILDER_LIST_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_COPY_MENU] = array(
+    'title' => 'Copy Form',
+    'description' => 'Copy an existing form.',
+    'file' => 'Copy.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_copy', 3),
+    'access arguments' => array(XML_FORM_BUILDER_CREATE_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_EDIT_MENU] = array(
+    'title' => 'Edit Form',
+    'description' => 'Edit a form.',
+    'file' => 'Edit.inc',
+    'page callback' => 'xml_form_builder_edit',
+    'page arguments' => array(3),
+    'access arguments' => array(XML_FORM_BUILDER_EDIT_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_SAVE_CALLBACK] = array(
+    'title' => 'Edit Form',
+    'description' => 'Edit a form.',
+    'file' => 'Edit.inc',
+    'page callback' => 'xml_form_builder_edit_save',
+    'page arguments' => array(3),
+    'access arguments' => array(XML_FORM_BUILDER_EDIT_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_DELETE_MENU] = array(
+    'title' => 'Delete Form',
+    'description' => 'Delete a form.',
+    'file' => 'Delete.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_delete', 3),
+    'access arguments' => array(XML_FORM_BUILDER_DELETE_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_ASSOCIATIONS_MENU] = array(
+    'title' => 'Associate Form "@form"',
+    'title arguments' => array('@form' => 3),
+    'description' => 'Associate a form.',
+    'file' => 'includes/associations.form.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_associations_form', 3),
+    'access arguments' => array(XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+    'tab_parent' => XML_FORM_BUILDER_MAIN_MENU,
+  );
+  // Remove existing associations, redirect back to list.
+  $items[XML_FORM_BUILDER_DISASSOCIATE_MENU] = array(
+    'title' => 'Disable Form Association',
+    'description' => 'Disable associated form.',
+    'file' => 'includes/associations.form.inc',
+    'page callback' => 'xml_form_builder_disable_association',
+    'page arguments' => array(3, 5),
+    // @todo Use something fedora specific.
+    'access arguments' => array(XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  // Enable default/hook associations, redirect back to list.
+  $items[XML_FORM_BUILDER_ASSOCIATE_MENU] = array(
+    'title' => 'Enable Form Association',
+    'description' => 'Enables an associated form.',
+    'file' => 'includes/associations.form.inc',
+    'page callback' => 'xml_form_builder_enable_association',
+    'page arguments' => array(3, 5),
+    // @todo Use something fedora specific.
+    'access arguments' => array(XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS),
+    'type' => MENU_CALLBACK,
+  );
+  $items[XML_FORM_BUILDER_EDIT_DATASTREAM_MENU] = array(
+    'title' => 'Edit datastream',
+    'file' => 'includes/edit_datastream.form.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xml_form_builder_edit_datastream_form', 3),
+    'access callback' => 'islandora_datastream_access',
+    'access arguments' => array(ISLANDORA_METADATA_EDIT, 3),
+    'load arguments' => array(2),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function xml_form_builder_admin_paths() {
+  $paths = array();
+  $paths['islandora/edit_form/*/*'] = TRUE;
+  return $paths;
+}
+
+/**
+ * Implements hook_forms().
+ *
+ * Acquires the form from XMLFormRepository, if it exists and is valid.
+ */
+function xml_form_builder_forms($form_id, $args) {
+  module_load_include('inc', 'xml_form_builder', 'XMLFormRepository');
+  if (XMLFormRepository::Exists($form_id) && XMLFormRepository::Valid($form_id)) {
+    return array(
+      $form_id => array(
+        'callback' => 'xml_form_builder_get_form',
+        'callback arguments' => array($form_id),
+      ),
+    );
+  }
+  return array(
+    $form_id => array(),
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function xml_form_builder_permission() {
+  return array(
+    XML_FORM_BUILDER_LIST_FORMS_PERMS => array(
+      'title' => t('View XML forms'),
+      'description' => t('View a list of all currently available XML forms.'),
+    ),
+    XML_FORM_BUILDER_CREATE_FORMS_PERMS => array(
+      'title' => t('Create XML forms'),
+      'description' => t('Create new XML forms using the Form Builder.'),
+    ),
+    XML_FORM_BUILDER_EDIT_FORMS_PERMS => array(
+      'title' => t('Edit XML forms'),
+      'description' => t('Edit existing XML forms using the Form Builder.'),
+    ),
+    XML_FORM_BUILDER_DELETE_FORMS_PERMS => array(
+      'title' => t('Delete XML forms'),
+      'description' => t('Permanently delete any XML form.'),
+    ),
+    XML_FORM_BUILDER_ASSOCIATE_FORMS_PERMS => array(
+      'title' => t('Associate XML forms'),
+      'description' => t('Associate forms with content models and datastream identifiers.'),
+    ),
+  );
+}
+
+/**
+ * Downloads the XML Form Definition to the clients computer..
+ *
+ * @param string $form_name
+ *   The name of the form to download.
+ */
+function xml_form_builder_export($form_name) {
+  module_load_include('inc', 'xml_form_builder', 'XMLFormRepository');
+  header('Content-Type: text/xml', TRUE);
+  header('Content-Disposition: attachment; filename="' . $form_name . '.xml"');
+  $definition = XMLFormRepository::Get($form_name);
+  $definition->formatOutput = TRUE;
+  echo $definition->saveXML();
+  exit();
+}
+
+/**
+ * Gets the path to the copy page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the copy page with,
+ *
+ * @return string
+ *   The path to the copy page.
+ */
+function xml_form_builder_get_copy_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_COPY_MENU);
+}
+
+/**
+ * Gets the path to the edit page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the edit page with,
+ *
+ * @return string
+ *   The path to the edit page.
+ */
+function xml_form_builder_get_edit_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_EDIT_MENU);
+}
+
+/**
+ * Gets the path to the view page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the view page with,
+ *
+ * @return string
+ *   The path to the view page.
+ */
+function xml_form_builder_get_view_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_VIEW_MENU);
+}
+
+/**
+ * Gets the path to the delete page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the delete page with,
+ *
+ * @return string
+ *   The path to the delete page.
+ */
+function xml_form_builder_get_export_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_EXPORT_CALLBACK);
+}
+
+/**
+ * Gets the path to the delete page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the delete page with,
+ *
+ * @return string
+ *   The path to the delete page.
+ */
+function xml_form_builder_get_delete_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_DELETE_MENU);
+}
+
+/**
+ * Gets the path to the associations page for the given form name.
+ *
+ * @param string $form_name
+ *   The form to load the associations page with,
+ *
+ * @return string
+ *   The path to the associations page.
+ */
+function xml_form_builder_get_associate_form_path($form_name) {
+  return str_replace('%', $form_name, XML_FORM_BUILDER_ASSOCIATIONS_MENU);
+}
+
+/**
+ * Gets a Form from the database.
+ *
+ * @param array $form
+ *   An array containing any "wrapping" elements.
+ * @param array $form_state
+ *   The Drupal Form State
+ * @param string $form_name
+ *   The Form to render.
+ * @param string $xml
+ *   The metadata to prepopulate the form with,
+ *
+ * @return array
+ *   The Drupal Form, if it exists FALSE otherwise.
+ */
+function xml_form_builder_get_form(array $form, array &$form_state, $form_name, $xml = NULL) {
+  form_load_include($form_state, 'inc', 'xml_form_builder', 'XMLFormRepository');
+  form_load_include($form_state, 'inc', 'xml_form_api', 'XMLForm');
+  form_load_include($form_state, 'inc', 'xml_form_api', 'XMLFormDefinition');
+  if (!XMLFormRepository::Exists($form_name)) {
+    drupal_set_message(t('The form "%name" does not exist.', array('%name' => $form_name)));
+    return FALSE;
+  }
+  elseif (!XMLFormRepository::Valid($form_name)) {
+    drupal_set_message(t('The Drupal form "%name" exists but is not valid. Please notify the administrator.', array('%name' => $form_name)));
+    return FALSE;
+  }
+  try {
+    $xml_form = new XMLForm($form_state);
+    // Was not initialized from storage.
+    if (!$xml_form->isInitialized()) {
+      $definition = new XMLFormDefinition(XMLFormRepository::Get($form_name));
+      $document = $definition->createXMLDocument($xml);
+      $form = $definition->getForm();
+      $xml_form->initialize($form, $document);
+    }
+    $form = array_merge($form, $xml_form->toArray($form_state));
+  }
+  catch (Exception $e) {
+    // Catch any errors that occured and display them to the user so that they
+    // may correct their form definition.
+    $msg = "File: {$e->getFile()}<br/>Line: {$e->getLine()}<br/>Error: {$e->getMessage()}";
+    drupal_set_message(filter_xss($msg), 'error');
+    return FALSE;
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function xml_form_builder_theme() {
+  return array(
+    'xml_form_builder_association_table' => array(
+      'variables' => array('associations' => NULL),
+      'template' => 'xml-form-builder-association-table',
+      'path' => drupal_get_path('module', 'xml_form_builder') . '/templates',
+    ),
+  );
+}
+
+/**
+ * Implements hook_islandora_ingest_steps().
+ *
+ * If the given configuration has more that one metadata form association add
+ * the select form step, if it only has one
+ * The add that metadata form as a step.
+ */
+function xml_form_builder_islandora_ingest_steps(array &$form_state) {
+  module_load_include('inc', 'xml_form_builder', 'includes/associations');
+  $shared_storage = islandora_ingest_form_get_shared_storage($form_state);
+  $association_step_storage = &islandora_ingest_form_get_step_storage($form_state, 'xml_form_builder_association_step');
+  if (empty($shared_storage['models'])) {
+    return;
+  }
+  $associations = xml_form_builder_get_associations(array(), $shared_storage['models'], array());
+  // If the user has selected association use that one, otherwise assume there
+  // is only one association.
+  $association = isset($association_step_storage['association']) ? $association_step_storage['association'] : reset($associations);
+  $num_associations = count($associations);
+  $select_association_step = ($num_associations > 1) ? array(
+    'weight' => 0,
+    'type' => 'form',
+    'form_id' => 'xml_form_builder_select_association_form',
+    'module' => 'xml_form_builder',
+    'file' => 'includes/select_association.form.inc',
+    'args' => array($associations),
+  ) : NULL;
+  $metadata_step = ($num_associations >= 1) ? array(
+    'weight' => 5,
+    'type' => 'form',
+    'form_id' => 'xml_form_builder_ingest_form',
+    'module' => 'xml_form_builder',
+    'file' => 'includes/ingest.form.inc',
+    'args' => array($association),
+  ) : NULL;
+  return array(
+    'xml_form_builder_association_step' => $select_association_step,
+    'xml_form_builder_metadata_step' => $metadata_step,
+  );
+}
+
+/**
+ * Implements hook_islandora_edit_datastream_registry().
+ */
+function xml_form_builder_islandora_edit_datastream_registry(AbstractObject $object, AbstractDatastream $datastream) {
+  module_load_include('inc', 'xml_form_builder', 'includes/associations');
+  $associations = xml_form_builder_get_associations(array(), $object->models, array($datastream->id));
+  if (count($associations) > 0) {
+    return array(
+      array(
+        'Name' => t('Islandora Content Model Forms'),
+        'url' => "islandora/edit_form/{$object->id}/{$datastream->id}",
+        'weight' => 5,
+      ),
+    );
+  }
+}
+
+/**
+ * This function is used by ingest/edit to update the given object.
+ *
+ * @param AbstractObject $object
+ *   The object to update.
+ * @param array $association
+ *   The association used to update the objects datastreams.
+ * @param XMLDocument $document
+ *   The generated metadata document to add to the object.
+ * @param string $label
+ *   A new label for the given object.
+ *
+ * @return array
+ *   An associative array where the keys are DSID's and the values are booleans
+ *   that state if the given datastream was created (TRUE) or updated (FALSE).
+ */
+function xml_form_builder_update_object(AbstractObject $object, array $association, XMLDocument $document, $label) {
+  $object->label = $label;
+  $object->models = array($association['content_model']);
+  $document = $document->document;
+  if (isset($association['self_transform']) && $association['self_transform'] != 'No Transform') {
+    $document = xml_form_builder_transform_metadata_datastream($association['self_transform'], $document);
+  }
+  $created = xml_form_builder_update_metadata_datastream($object, $association['dsid'], $document);
+  $created_dc = xml_form_builder_update_dc_datastream($object, $association['transform'], $document);
+  return array($association['dsid'] => $created, 'DC' => $created_dc);
+}
+
+/**
+ * Applies xslt to incoming datastream.
+ *
+ * @param xslt $transform
+ *   Name of xslt to be applied
+ * @param DOMDocument $source_document
+ *   Document to be transformed
+ *
+ * @return DOMDocument
+ *   Transformed document on success, original on failure.
+ */
+function xml_form_builder_transform_metadata_datastream($transform = NULL, DOMDocument $source_document) {
+  module_load_include('inc', 'xml_form_builder', 'includes/associations');
+  $transform_path = NULL;
+  $transforms = xml_form_builder_get_self_transforms();
+  // No transform has no file.
+  unset($transforms['No Transform']);
+  if (array_key_exists($transform, $transforms)) {
+    $transform_path = $transforms[$transform];
+  }
+
+  if ($transform_path) {
+    $xsl = new DOMDocument();
+    $xsl->load($transform_path);
+    $xslt = new XSLTProcessor();
+    $xslt->importStyleSheet($xsl);
+    $document = $xslt->transformToDoc($source_document);
+    return $document;
+  }
+  return $source_document;
+}
+
+/**
+ * Updates the given metadata datastream with the given document.
+ *
+ * @param AbstractObject $object
+ *   The object to update.
+ * @param array $datastream_id
+ *   The datastream to update.
+ * @param DOMDocument $document
+ *   The document to transform.
+ *
+ * @return bool
+ *   TRUE if the datastream was created, FALSE if it was updated.
+ */
+function xml_form_builder_update_metadata_datastream(AbstractObject $object, $datastream_id, DOMDocument $document) {
+  $created = FALSE;
+  $document->preserveWhiteSpace = TRUE;
+  $document->formatOutput = TRUE;
+  if (isset($object[$datastream_id])) {
+    $datastream = $object[$datastream_id];
+    $datastream->setContentFromString(trim($document->saveXML()));
+    if ($datastream->label != "$datastream_id Record") {
+      $datastream->label = "$datastream_id Record";
+    }
+    if ($datastream->mimetype != 'text/xml') {
+      $datastream->mimetype = 'text/xml';
+    }
+  }
+  else {
+    $datastream = $object->constructDatastream($datastream_id, 'M');
+    $datastream->setContentFromString(trim($document->saveXML()));
+    $datastream->label = "$datastream_id Record";
+    $datastream->mimetype = 'text/xml';
+    $object->ingestDatastream($datastream);
+    $created = TRUE;
+  }
+  return $created;
+}
+
+/**
+ * Updates the DC datastream by applying the given transform.
+ *
+ * @param AbstractObject $object
+ *   The object whose DC will be updated.
+ * @param string $transform
+ *   The transform to apply, as defined by the forms association.
+ * @param DOMDocument $document
+ *   The document to transform.
+ */
+function xml_form_builder_update_dc_datastream(AbstractObject $object, $transform, DOMDocument $document) {
+  module_load_include('inc', 'xml_form_builder', 'includes/associations');
+  $created = FALSE;
+  $transform = xml_form_builder_get_transform_file($transform);
+  if ($transform) {
+    if (empty($object['DC'])) {
+      $dc_datastream = $object->constructDatastream('DC', 'X');
+      $dc_datastream->label = 'DC Record';
+      $object->ingestDatastream($dc_datastream);
+      $created = TRUE;
+    }
+    else {
+      $dc_datastream = $object['DC'];
+    }
+    // Since we typically use the LOC transform for MODS => DC, and
+    // mods:modsCollection results in DC format we don't support (non OAI), we
+    // catch this exceptional case here before transforming. This use case only
+    // handles a single MODS document within a mods:modsCollection if there are
+    // multiple or if the given document is not MODS the transform does nothing.
+    $document = xml_form_builder_transform_mods_collection_hack($document);
+    $transformed_dc_doc = xml_form_builder_transform_document($transform, $document);
+    $dc_datastream->setContentFromString($transformed_dc_doc->saveXML());
+  }
+  return $created;
+}
+
+/**
+ * Extracts the MODS document from a mods:modsCollection element if present.
+ *
+ * For any document which does not have a mods:modsCollection element, the
+ * transform does nothing.
+ *
+ * @param DOMDocument $document
+ *   The Document to transform.
+ *
+ * @return DOMDocument
+ *   The transformed document.
+ */
+function xml_form_builder_transform_mods_collection_hack(DOMDocument $document) {
+  $xsl = new DOMDocument();
+  $xsl->load(drupal_get_path('module', 'xml_form_builder') . '/xml/extract_mods_from_collection.xsl');
+  $xslt = new XSLTProcessor();
+  $xslt->importStyleSheet($xsl);
+  return $xslt->transformToDoc($document);
+}

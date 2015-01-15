@@ -1,0 +1,11 @@
+name = "Islandora newspaper"
+description = "A default Islandora module to handle newspapers"
+dependencies[] = islandora
+dependencies[] = islandora_paged_content
+package = Islandora
+version = 7.x-1.3
+core = 7.x
+configure = admin/islandora/newspaper
+stylesheets[all][] = css/islandora_newspaper.base.css
+stylesheets[all][] = css/islandora_newspaper.theme.css
+files[] = tests/islandora_newspaper_derivatives_ingest_purge.test
