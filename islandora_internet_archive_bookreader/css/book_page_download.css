@@ -1,0 +1,23 @@
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : Jan 29, 2015, 11:59:28 AM
+    Author     : zhao0677
+*/
+
+button #book-page-download-btn {
+    border: 2px solid;
+    border-radius: 25px;
+}
+
+span.book-page-download-btntxt {
+    color: #008BCB;
+    font-size: 12px;
+}
+
+td.downloadLinksTableCell {
+    text-align: center;
+}
